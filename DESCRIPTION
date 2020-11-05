@@ -23,7 +23,8 @@ Depends:
     R (>= 4.0)
 Suggests: 
     testthat,
-    knitr
+    knitr,
+    rmarkdown
 biocViews: FunctionalGenomics, AlternativeSplicing
 RoxygenNote: 7.1.1
 Authors@R: person("Johannes", "Ptok", role = c("aut", "cre"), email = "Johannes.Ptok@posteo.de")

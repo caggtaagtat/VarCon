@@ -63,7 +63,7 @@ calculateMaxEntScanScore <- function(seqVector, ssType=3) {
 }
 
 
-# use_data(gene2transcript , hbg, hex, referenceDnaStringSet, transCoord, overwrite = TRUE)
+# use_data(gene2transcript , hbg, hex, referenceDnaStringSet, transCoord, overwrite = TRUE,compress= "xz")
 # 
 # save(gene2transcript , hbg, hex, referenceDnaStringSet, transCoord, file = "sysdata.rda",
 #     version = 2, compress= "xz")

@@ -16,6 +16,6 @@ Creates new DNAStringSet from the object stated by the entered filepath.
 \examples{
  ## Loading exemplary DNAStringSet
  filepath <- system.file("extdata", "fastaEx.fa", package="Biostrings")
- prepareReferenceFasta(filepath)
+ referenceDnaStringSet <- prepareReferenceFasta(filepath)
 
 }

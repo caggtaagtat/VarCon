@@ -6,7 +6,7 @@ prepareReferenceFasta <- function(filepath){
                                    function(x){ strsplit(x, " ")[[1]][[1]]}))
   names(referenceDnaStringSet2) <- ref_names
 
-  referenceDnaStringSet <<- referenceDnaStringSet2
+  return(referenceDnaStringSet2)
 
 
 }

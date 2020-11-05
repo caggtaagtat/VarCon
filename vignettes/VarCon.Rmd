@@ -164,17 +164,16 @@ library(VarCon)
 transcriptTable <- transCoord
 transcriptID <- "pseudo_ENST00000650636"
 variation <- "c.412T>G/p.(T89M)"
-ntWindow <- 20
 gene2transcript <- data.frame(gene_name = "Example_gene",
 gene_ID = "pseudo_ENSG00000147099", transcriptID = "pseudo_ENST00000650636")
 
 results <- getSeqInfoFromVariation(referenceDnaStringSet, transcriptID,
-variation, ntWindow=ntWindow, transcriptTable, gene2transcript)
+variation, ntWindow=20, transcriptTable, gene2transcript=gene2transcript)
 
 ## Or Using a predefined gene to transcript conversion table
 transcriptID <- "Example_gene"
 results <- getSeqInfoFromVariation(referenceDnaStringSet, transcriptID,
-variation, ntWindow=ntWindow, transcriptTable, gene2transcript)
+variation, ntWindow=20, transcriptTable, gene2transcript=gene2transcript)
 
 ```
 
@@ -183,10 +182,6 @@ The resulting information can be visualized using the function
 stating the HEXplorer profile of the nucleotide surrounding 
 and the strength of surrouning splice sites.
 
-```{r, eval=TRUE}
-## Visualize impact of SNV on splice site strenghts and predicted SRE binding
-generateHEXplorerPlot(results)
-```
 
 VarCon can alternatively be used as an shiny user interface using the `startVarConApp()`.
 
