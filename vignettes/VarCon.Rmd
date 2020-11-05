@@ -1,0 +1,200 @@
+---
+title: "Analysing SNVs with VarCon"
+author: "Johannes Ptok"
+date: "`r format(Sys.Date(), '%m/%d/%Y')`"
+output:
+  rmarkdown::html_document:
+vignette: >
+  %\VignetteIndexEntry{Analysing SNVs with VarCon}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, echo=FALSE, results="hide"}
+knitr::opts_chunk$set(tidy = FALSE,
+                      cache = FALSE,
+                      dev = "png",
+                      message = FALSE, error = FALSE, warning = TRUE)
+```	
+
+
+# Introduction
+
+Comparing genomic DNA sequences of individuals of the same species
+reveals positions where single nucleotide variations (SNVs) occur.
+SNVs can influence transcription, RNA processing and translation, 
+indicated by lower frequency of variants within sequence elements 
+like transcription or translation start sites, splice sites and 
+splicing regulatory elements. When localized within the 
+coding sequence of a gene, SNVs can, among others, affect which
+amino acids are encoded by the altered codon, potentially leading
+to disease. Approximately 88% of human SNVs associated with 
+disease are, however, not located within the coding sequence of
+genes, but within intronic and intergenic sequence segments.
+Nevertheless, annotations referring to the coding sequence of a
+specific transcript are still widely used, e.g. c.8754+3G>C 
+(BRCA2 and Ensembl transcript-ID ENST00000544455), referring to 
+the third intronic nucleotide downstream of the splice donor (SD) 
+at the position of the 8754th coding nucleotide. Based on its 
+position information referring to the coding sequence (c.) or 
+alternatively to the genomic (g.) position (e.g. g.1256234A>G),
+our tool VarCon retrieves an adjustable SNV sequence neighborhood
+from the reference genome. Both intronic and exonic SNVs can lead
+to disease by activating cryptic splice sites, generating de 
+novo splice sites or altering usage of physiological splices 
+sites. However, disruption of splicing can also originate
+from SNVs within splice regulatory elements (SREs), potentially
+altering their ability to recruit splicing regulatory proteins
+(SRPs). The capacity of genomic sequences to recruit 
+splicing regulatory proteins to the pre-mRNA transcript can by 
+assessed by the HEXplorer score. Highly positive (negative) 
+HZEI scores indicate sequence segments, which enhance (repress)
+usage of both downstream 5’ splice sites and upstream 3’ splice
+sites. .
+VarCon therefore calculates the HEXplorer score of the retrieved
+nucleotide sequence with and without the variation, to detect 
+potential crucial changes in the property of the sequences to 
+recruit SRPs.
+To visualize possible effects of SNVs on splice sites or splicing
+regulatory elements, which play an increasing role in cancer 
+diagnostics and therapy, VarCon additionally calculates HBond
+scores of SDs and MaxEnt scores[10] of splice acceptor sites
+(SA).
+
+
+
+# Implementation
+
+VarCon is an R package which can be executed from Windows, Linux 
+or Mac OS. It executes a Perl script located in its directory and
+therefore relies on prior installation of some version of Perl 
+(e.g. Strawberry Perl). Additionally, the human reference genome 
+must be downloaded as fasta file (or zipped fasta.gz) with Ensembl 
+chromosome names (“1” for chromosome 1) and subsequently uploaded
+into the R working environment, using the function 
+“prepareReferenceFasta” to generate a large DNAStringset (file
+format of the R package Biostrings). In order to translate SNV
+positional information, referring to the coding sequence of a 
+transcript, two transcript tables are pre-loaded with the VarCon
+package. Both contain exon and coding sequence coordinates of every
+transcript from Ensembl, and refer either to the genome assembly
+GRCh37 or GRCh38. 
+Since the transcript table with the GRCh38 genomic coordinates 
+(currently from Ensembl version 100) will be updated with further
+releases, a new transcript table can be downloaded using the 
+Ensembl Biomart interface. Any newly generated transcript table,
+however, must contain the same columns and column names as 
+described in the documentation of the current transcript tables
+for correct integration. Since, for instance, in cancer research
+the transcript which is used to refer to genomic positions of 
+SNVs is often the same, a gene-to-transcript conversion table
+can be used for synonymous usage of certain gene names (or gene
+IDs) and transcript IDs (Ensembl ID). VarCon deliberately does
+not rely on Biomart queries using the Biomart R package, since 
+these might be blocked by firewalls. 
+Due to its structure, the VarCon package can accept any genome 
+and transcript table combination which is available on Ensembl
+and thus additionally permits usage for any other organism 
+represented in the Ensembl database[11]. The combination of 
+already existing tools like Mutalyzer[12], SeqTailor[13] or
+ensembldb[14] can lead to similar results during the variation
+conversion and DNA sequence extraction. However, VarCon holds 
+additional benefits, namely its straightforward usage even on 
+a large-throughput scale, its independence due to the direct 
+data entry and its instant graphical representation of splicing
+regulatory elements and intrinsic splice site strength.
+
+After upload of the human reference genome, selection of the
+appropriate transcript table and a potential gene-to-transcript
+conversion table, a transcript ID (or gene name) and an SNV 
+(whose positional information either refers to the coding (“c.”)
+or genomic (“g.”) sequence) are requested during the execution
+of the main function of the package. VarCon then uses the 
+information of the transcripts’ exon coordinates to translate
+the SNV positional information to a genomic coordinate, if 
+needed. Then the genomic sequence around the SNV position is
+retrieved from the reference genome in the direction of the
+open reading frame and committed to further analysis, both 
+with and without the SNV.
+
+For analysis of an SNV impact on splicing regulatory elements,
+VarCon calculates the HZEI score profile of reference and 
+SNV sequences from the HEXplorer algorithm[7] and visualizes
+both in a bar plot. The HEXplorer score assesses splicing
+regulatory properties of genomic sequences, their capacity 
+to recruit splicing regulatory proteins to the pre-mRNA
+transcript. Highly positive (negative) HZEI scores indicate
+sequence segments, which enhance (repress) usage of both
+downstream 5’ splice sites and upstream 3’ splice sites.
+
+Additionally, intrinsic strengths of SD and SA sites are 
+visualized within the HZEI score plot. SD strength is
+calculated by the HBond score, based on hydrogen bonds 
+formed between a potential SD sequence and all 11 nucleotides 
+of the free 5’ end of the U1 snRNA. SA strength is 
+calculated by the MaxEnt score, which is essentially based 
+on the observed distribution of splice acceptor sequences
+within the reference genome, while also taking into account 
+dependencies between both non-neighboring and neighboring
+nucleotide positions[10]. 
+
+VarCon can either be executed using integrated R package
+functions according to the manual on github, or with a GUI
+application based on R package shiny. The shiny app (app.R)
+can be found within the package directory “/VarCon/shiny/”.
+To provide the data needed by VarCon within the shiny app, 
+the working directory has to be changed to the app.R source
+file location prior to starting the shiny application.
+
+
+# Applying VarCon to an SNV
+
+The main function of the VarCon package is the `getSeqInfoFromVariation` 
+function, which requires the following input parameters: a DNAStringSet 
+of the reference genome (e.g. loaded with the integrated `prepareReferenceFasta`
+function), the Ensembl transcript ID, the SNV annotation (either refering to 
+the coding sequence or genomic sequence), the size of the sequence surrounding 
+which should be reported, the transcript table and optionally a gene-to-transcript
+conversion table.
+
+```{r, eval=TRUE}
+library(VarCon)
+
+## Defining exemplary input data
+transcriptTable <- transCoord
+transcriptID <- "pseudo_ENST00000650636"
+variation <- "c.412T>G/p.(T89M)"
+ntWindow <- 20
+gene2transcript <- data.frame(gene_name = "Example_gene",
+gene_ID = "pseudo_ENSG00000147099", transcriptID = "pseudo_ENST00000650636")
+
+results <- getSeqInfoFromVariation(referenceDnaStringSet, transcriptID,
+variation, ntWindow=ntWindow, transcriptTable, gene2transcript)
+
+## Or Using a predefined gene to transcript conversion table
+transcriptID <- "Example_gene"
+results <- getSeqInfoFromVariation(referenceDnaStringSet, transcriptID,
+variation, ntWindow=ntWindow, transcriptTable, gene2transcript)
+
+```
+
+The resulting information can be visualized using the function
+`generateHEXplorerPlot` which will generate a HEXplorer plot 
+stating the HEXplorer profile of the nucleotide surrounding 
+and the strength of surrouning splice sites.
+
+```{r, eval=TRUE}
+## Visualize impact of SNV on splice site strenghts and predicted SRE binding
+generateHEXplorerPlot(results)
+```
+
+VarCon can alternatively be used as an shiny user interface using the `startVarConApp()`.
+
+
+# Session info
+
+```{r sessionInfo}
+sessionInfo()
+```
+
+
