@@ -19,7 +19,7 @@ hex
 Hexamers and Z scores
 }
 \examples{
-\dontrun{
+\donttest{
 hex
 } 
 
