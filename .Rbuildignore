@@ -3,6 +3,7 @@
 <<<<<<< HEAD
 .Rproj.user/
 ^\.Rproj\.user/$
+.Rproj
 =======
 .Rproj.user
 >>>>>>> 4a60eceab56e33ac8c3a57e636f921ab680ecef3
