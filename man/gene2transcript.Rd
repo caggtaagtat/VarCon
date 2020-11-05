@@ -15,7 +15,7 @@ gene2transcript
 Small data frame specifying a transcript to certain genes for synonymous use.
 }
 \examples{
-\dontrun{
+\donttest{
  gene2transcript
 }
 }

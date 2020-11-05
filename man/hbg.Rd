@@ -14,7 +14,7 @@ hbg
 Donor sequences and their HBS
 }
 \examples{
-\dontrun{
+\donttest{
  hbg
 }
 }

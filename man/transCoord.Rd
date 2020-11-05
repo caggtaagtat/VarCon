@@ -25,7 +25,7 @@ transCoord
 Small table as exemplary transcript table with exon coordinates.
 }
 \examples{
-\dontrun{
+\donttest{
  transCoord
 }
 }
