@@ -15,7 +15,7 @@ referenceDnaStringSet
 Small DNAStringset as exemplary reference genome sequence 
 }
 \examples{
-\dontrun{
+\donttest{
 referenceDnaStringSet
 }
 }
