@@ -31,15 +31,15 @@ generateHEXplorerPlot <- function(variationInfoList, ntWindow=20){
     geom_bar(stat='identity', position = "dodge")+ xlab("Sequence")+
     scale_y_continuous(name="Hexplorer score",
                        breaks=c(seq(-75,0,5),seq(2,34,2)),
-                       limits=c(min(durchzahl$endhex)-6,
-                                max(c(durchzahl$hbs,durchzahl$endhex))+1) )+
+                       limits=c(min(durchzahl$endhex)-10,
+                                max(c(durchzahl$hbs,durchzahl$endhex))+5) )+
     theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())+
     annotate("text", label = durchzahl$index_nt[durchzahl$Sequence=="reference"] ,
              x= seq_len((nrow(durchzahl))/2),
              y = min(durchzahl$endhex-2), size = durchzahl$size[durchzahl$Sequence=="reference"],
              colour = "skyblue1", fontface = durchzahl$ff[durchzahl$Sequence=="reference"])+
     annotate("text", label = durchzahl$index_nt[durchzahl$Sequence=="reference with variation"] ,
-             x= seq_len((nrow(durchzahl))/2), y = min(durchzahl$endhex-4),
+             x= seq_len((nrow(durchzahl))/2), y = min(durchzahl$endhex-6),
              size = durchzahl$size[durchzahl$Sequence=="reference with variation"], colour = "gray30",
              fontface = durchzahl$ff[durchzahl$Sequence=="reference with variation"])+
     scale_fill_manual(values=c("#56B4E9", "#000000"))
