@@ -11,5 +11,7 @@ Start graphical user interface for the VarCon application.
 Shiny app
 }
 \examples{
+\dontrun{
 startVarConApp()
+}
 }
