@@ -20,7 +20,7 @@ Depends:
     Biostrings,
     BSgenome,
     GenomicRanges,
-    R (>= 3.6)
+    R (>= 4.0)
 Suggests: 
     testthat,
     knitr,
