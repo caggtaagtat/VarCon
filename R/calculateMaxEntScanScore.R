@@ -6,23 +6,22 @@ calculateMaxEntScanScore <- function(seqVector, ssType=3) {
   
   ## Error messages for wrong entries seq
   if(!ssType %in% c(3,5))
-   stop("ERROR during setting of variable 'ssType'.",
-                "The entered ss type must be numeric value 3 or 5, for SA or SD sites.")
+    stop("ERROR during setting of variable 'ssType'.",
+         "The entered ss type must be numeric value 3 or 5, for SA or SD sites.")
   
   if(((ssType == 3) & (unique(nchar(seqVector)) != 23)))
-   stop("ERROR during setting of variable 'seqVector'.",
-                "3'ss (SA) sequences must be of length 23 for MaxEntScan score calculation.")
+    stop("ERROR during setting of variable 'seqVector'.",
+         "3'ss (SA) sequences must be of length 23 for MaxEntScan score calculation.")
   
   if((ssType == 5) & (unique(nchar(seqVector)) != 9))
-   stop("ERROR during setting of variable 'seqVector'.",
-                "3'ss (SA) sequences must be of length 9 for MaxEntScan score calculation.")
+    stop("ERROR during setting of variable 'seqVector'.",
+         "3'ss (SA) sequences must be of length 9 for MaxEntScan score calculation.")
   
   if (!all(strsplit(paste(seqVector, collapse = ""), "")[[1]] %in% c("a",
                                                                      "c", "g", "t", "G", "C", "T", "A")))
     warning("WARNING during setting of variable 'seqVector'. ",
-                  "One or more sequences showed characters apart from A C G and T.",
-                  " MaxEntScan score calculation not possible for the affected sequences.")
-  
+            "One or more sequences showed characters apart from A C G and T.",
+            " MaxEntScan score calculation not possible for the affected sequences.")
   
   ## Save current working directory
   curwd <- getwd()
@@ -31,18 +30,16 @@ calculateMaxEntScanScore <- function(seqVector, ssType=3) {
   fpath <- system.file("extdata", "me2x5", package = "VarCon")
   setwd(dirname(fpath))
   
-  ## Delete inputSequences file in case it already exists
-  if (file.exists("inputSequences"))
-    file.remove("inputSequences")
+  inputSequences <- tempfile("inputSequences")
   
   ## Create new text file with the sequences saved
-  cat(seqVector, file = "inputSequences", sep = "\n", append = TRUE)
+  write.table(seqVector, sep=",",  col.names=FALSE, file=inputSequences, row.names = F)
   
   ## Execute the respective Perl script with the respective Sequence file
   if (ssType == 3)
-    cmd <- paste("score3.pl", "inputSequences")
+    cmd <- paste("score3.pl", inputSequences)
   if (ssType == 5)
-    cmd <- paste("score5.pl", "inputSequences")
+    cmd <- paste("score5.pl", inputSequences)
   
   ## Save the calculated Maxent score file
   x <- system2("perl", args=cmd, stdout = TRUE)
