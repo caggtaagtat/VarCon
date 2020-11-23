@@ -8,6 +8,8 @@ library("Biostrings")
 library("BSgenome")
 library("VarCon")
 
+readRDS("exampleTransCoord")
+
 ###########################################
 ## Server and UI code
 
@@ -17,7 +19,36 @@ server <- function(input, output, session) {
   ## close the R session when app closes
   session$onSessionEnded(function() {
     stopApp()
-   })
+  })
+  
+  uploadReferenceDNA <- eventReactive(path$pth,{
+    
+    testFASTA <- strsplit(path$pth,"\\.")[[1]]
+    if(testFASTA[length(testFASTA)] %in% c("fa","fasta")){
+      referenceDnaStringSet2 <- readDNAStringSet(path$pth, format="fasta",use.names=TRUE)
+      ref_names <- as.character(lapply(names(referenceDnaStringSet2),
+                                       function(x){ strsplit(x, " ")[[1]][[1]]}))
+      names(referenceDnaStringSet2) <- ref_names
+      referenceDnaStringSet <- referenceDnaStringSet2
+    }else{
+      load(path$pth)
+    }   
+    
+    referenceDnaStringSet
+  }) 
+  
+  
+  
+  uploadTranscriptTable <- eventReactive(path3$pth3,{
+    
+    ## Get human transcript tables e.g. from https://github.com/caggtaagtat/VarConTables
+    testCSV <- strsplit(path3$pth3,"\\.")[[1]]
+    if(testCSV[length(testCSV)] == "csv"){
+      transCoord <- read.csv(path3$pth3, sep=";")
+    }else{ transCoord <- readRDS(path3$pth3)}
+    
+    transCoord
+  }) 
   
   ## Report when upload of reference genome is complete
   output$sum_text2 <- renderUI({
@@ -25,14 +56,8 @@ server <- function(input, output, session) {
     ## Genome fasta to download e.g. from 
     ## ftp://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/
     ## dna/Homo_sapiens.GRCh38.dna.toplevel.fa.gz
-
-    referenceDnaStringSet2 <- readDNAStringSet(path$pth, format="fasta",use.names=TRUE)
-    ref_names <- as.character(lapply(names(referenceDnaStringSet2),
-                                     function(x){ strsplit(x, " ")[[1]][[1]]}))
-    names(referenceDnaStringSet2) <- ref_names
     
-    referenceDnaStringSet <<- referenceDnaStringSet2
-
+    test <- uploadReferenceDNA()
     HTML("Upload of reference genome completed...")
     
   })
@@ -40,31 +65,31 @@ server <- function(input, output, session) {
   ## Report when upload of reference genome is complete
   output$sum_text22 <- renderUI({
     
-    ## Get human transcript tables e.g. from https://github.com/caggtaagtat/VarConTables
-    transCoord <- read.csv(path3$pth3, sep=";")
-    
+    test2 <- uploadTranscriptTable()
     HTML("Upload of transcript table completed...")
     
   })
   
   
-
+  
   ## Generate the text for describing the difference between the Hexplorer Scores of both sequences
   output$sum_text <- renderUI({
     
     gene2transcript <- read.csv(path2$pth2, sep=";", stringsAsFactors=FALSE)
+    referenceDnaStringSet <- uploadReferenceDNA()
+    transCoord <- uploadTranscriptTable()
     
     #Get information about the SNV
     res <-  getSeqInfoFromVariation(referenceDnaStringSet, input$transcriptID, input$variation,
                                     ntWindow= input$ntWindow, transCoord, gene2transcript=gene2transcript)
     
     #Sum up the info
-    HTML(paste(paste0("For the given annotation  ",res$funcAnnotation,
+    HTML(paste0("For the given annotation  ",res$funcAnnotation,
                       " within transcript ", res$transcript,
                       " following sequence was found around the chromosomal coordinate ",
                       res$genomicCoordinate," on chromosome ",res$chromosome, " :"),
                "",paste0("Ref Seq: ",res$sequence),"", 
-               paste0("Ref+vari:",res$altSeq) , sep="<br/>"))
+               paste0("Ref+vari:",res$altSeq) , sep="<br/>")
     
   })
   
@@ -72,7 +97,9 @@ server <- function(input, output, session) {
   output$plot <- renderPlot({
     
     gene2transcript <- read.csv(path2$pth2, sep=";", stringsAsFactors=FALSE)
-
+    referenceDnaStringSet <- uploadReferenceDNA()
+    transCoord <- uploadTranscriptTable()
+    
     ## Retrieve information form genome
     res <-  getSeqInfoFromVariation(referenceDnaStringSet, input$transcriptID,
                                     input$variation, ntWindow=input$ntWindow, transCoord,
@@ -87,7 +114,7 @@ server <- function(input, output, session) {
       scale_fill_manual(values=c("#56B4E9", "#000000"))+
       geom_bar(stat='identity', position = "dodge")+ xlab("Sequence")+ylab("Hexplorer score")+
       theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())+
-      annotate("text", label =substr(durchzahl$seq9[durchzahl$Sequence=="sequence of interest"],6,6 ) , x= 1:((nrow(durchzahl))), y = min(durchzahl$endhex-4), size = 3, colour = "black")
+      annotate("text", label =substr(durchzahl$seq9[durchzahl$Sequence=="sequence of interest"],6,6 ) , x= 1:((nrow(durchzahl))), y = min(durchzahl$endhex-8), size = 3, colour = "black")
     
     plot
     
@@ -97,6 +124,8 @@ server <- function(input, output, session) {
   output$plot2 <- renderPlot({
     
     gene2transcript <- read.csv(path2$pth2, sep=";", stringsAsFactors=FALSE)
+    referenceDnaStringSet <- uploadReferenceDNA()
+    transCoord <- uploadTranscriptTable()
     
     ## Retrieve information form genome
     res <-  getSeqInfoFromVariation(referenceDnaStringSet, input$transcriptID, 
@@ -112,9 +141,12 @@ server <- function(input, output, session) {
   
   ## Genereate the plot, where you can see a zoomed in version of the plot above
   output$plot_zoom <- renderPlot({
-
+    
     gene2transcript <- read.csv(path2$pth2, sep=";", stringsAsFactors=FALSE)
-
+    referenceDnaStringSet <- uploadReferenceDNA()
+    transCoord <- uploadTranscriptTable()
+    
+    
     ## Retrieve information form genome
     res <-  getSeqInfoFromVariation(referenceDnaStringSet, input$transcriptID,
                                     input$variation, ntWindow=input$ntWindow,
@@ -142,7 +174,10 @@ server <- function(input, output, session) {
   output$plot2_zoom <- renderPlot({
     
     gene2transcript <- read.csv(path2$pth2, sep=";", stringsAsFactors=FALSE)
-
+    referenceDnaStringSet <- uploadReferenceDNA()
+    transCoord <- uploadTranscriptTable()
+    
+    
     ## Retrieve information form genome
     res <-  getSeqInfoFromVariation(referenceDnaStringSet, input$transcriptID, 
                                     input$variation, ntWindow=input$ntWindow, transCoord,
@@ -168,6 +203,8 @@ server <- function(input, output, session) {
   output$plot2_text <- renderUI({
     
     gene2transcript <- read.csv(path2$pth2, sep=";", stringsAsFactors=FALSE)
+    referenceDnaStringSet <- uploadReferenceDNA()
+    transCoord <- uploadTranscriptTable()
     
     ## Retrieve information form genome
     res <-  getSeqInfoFromVariation(referenceDnaStringSet, input$transcriptID,
@@ -205,8 +242,10 @@ server <- function(input, output, session) {
   )
   
   path3 <- reactiveValues(
-    pth3= system.file("extdata", "fastaEx.fa", package="Biostrings")
+    pth3= system.file("extdata", "exampleTransCoord", package="VarCon")
   )
+  
+  
   
   observeEvent(input$filechoose,{
     path$pth <- file.choose()
@@ -227,8 +266,8 @@ server <- function(input, output, session) {
 #User Interface Script
 
 ui <- fluidPage(
-
-    ## Type Headline
+  
+  ## Type Headline
   titlePanel("VarCon: Retrieve genomic sequence around sequence variation"),
   
   "VarCon retrieves the surrounding genomic sequence of a stated sequence variation and visualizes potential changes in sequence elements important for splicing. Please first upload the fasta file of the respective reference genome sequence. Loading and processing of the data will take up to 2 minutes.",
@@ -239,23 +278,23 @@ ui <- fluidPage(
   ## Have different tabs in your programm
   tabsetPanel(type = "tabs",
               
-              tabPanel("Upload reference sequence",
+              tabPanel("Upload reference data",
                        
                        
                        fluidRow(
                          
-                         column(4,  h4("Path of fasta reference genome"),
-                                actionButton("filechoose",label = "Path to FASTA file")
-                                                  
+                         column(4,  h4("Fasta reference genome"),
+                                actionButton("filechoose",label = "Select FASTA file")
+                                
                                 
                          ),
                          
-
-                         column(4, h4("Path of transcript table"),
-                                actionButton("filechoose3",label = "Path to transcript table")),
                          
-                         column(3,  h4("Path of gene to transcript table"),
-                                actionButton("filechoose2",label = "Path to gene2transcript table")
+                         column(4, h4("Transcript table"),
+                                actionButton("filechoose3",label = "Select transcript table")),
+                         
+                         column(3,  h4("Optional: gene/transcript table"),
+                                actionButton("filechoose2",label = "Select gene2transcript table")
                                 
                                 
                          )
@@ -265,10 +304,10 @@ ui <- fluidPage(
                        
                        fluidRow(
                          
-                           column(4,   withSpinner(htmlOutput("sum_text2"), type=6)),
-                           column(4,   withSpinner(htmlOutput("sum_text22"), type=6))
-                                
-                        
+                         column(4,   withSpinner(htmlOutput("sum_text2"), type=6)),
+                         column(4,   withSpinner(htmlOutput("sum_text22"), type=6))
+                         
+                         
                          
                        )
                        
@@ -276,7 +315,7 @@ ui <- fluidPage(
                        
               ),
               
-              tabPanel("Retrieve sequence around variation",
+              tabPanel("Retrieve sequence around SNV",
                        
                        
                        fluidRow(
@@ -288,9 +327,9 @@ ui <- fluidPage(
                                 )),
                          
                          
-                         column(3, textInput("transcriptID", label = h4("Transcript ID (ENSEMBL)"),value= "pseudo_ENST00000650636")),
+                         column(3, textInput("transcriptID", label = h4("Transcript ID (ENSEMBL)"),value= "ENST00000544455")),
                          
-                         column(3, textInput("variation", label = h4("Functional variation"),value= "c.412T>G/p.(B89O)")),
+                         column(3, textInput("variation", label = h4("Functional variation"),value= "c.516+21A>T")),
                          
                          column(3, numericInput("ntWindow", label = h4("Seq x nt up/downstream"), value= 20, min=5, max=150))
                          
@@ -316,7 +355,7 @@ ui <- fluidPage(
                        
               ),
               
-              tabPanel("Impact of variation on splicing sequence elements",
+              tabPanel("Impact splice site strength and SREs",
                        
                        br(),
                        
@@ -343,10 +382,12 @@ ui <- fluidPage(
                        h3("1. Upload reference genome fasta file"),
                        "First, please upload the fasta file (or zipped fasta.gz) of the reference genome sequence.",
                        br(),
+                       "Potentially required data for the reference genome GRCh37 and GRCh38 is availible in the directory of this application.",
+                       br(),
                        "If needed, the required file can be downloaded from the Ensembl ftp server ftp://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
                        br(),
                        br(),
-                      
+                       
                        h3("2. Select genome assembly"), 
                        "Next, select whether the uploaded genome reference file originated from assembly GRCh37 or GRCh38.",
                        "The respective transcript table, holding the genomic exon coordinates will be selected.",
@@ -368,7 +409,7 @@ ui <- fluidPage(
               )
               
   )
-
+  
 )
 
 

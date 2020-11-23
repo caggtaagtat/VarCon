@@ -1,7 +1,7 @@
 import(BSgenome)
-importFrom("Biostrings","readDNAStringSet")
+#importFrom("Biostrings","readDNAStringSet")
 importFrom("GenomicRanges", "GRanges")
-importFrom("seqinr", "read.fasta")
+#importFrom("seqinr", "read.fasta")
 importFrom("IRanges", "reverse")
 import(ggplot2)
 import(shiny)
@@ -9,6 +9,7 @@ import(shinycssloaders)
 import(shinyFiles)
 importFrom("methods", "as")
 importFrom("stats", "median", "na.omit")
+import(Biostrings)
 
 #export functions
 export(calculateHZEIperNT)

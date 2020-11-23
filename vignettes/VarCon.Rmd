@@ -13,8 +13,7 @@ vignette: >
 ```{r setup, echo=FALSE, results="hide"}
 knitr::opts_chunk$set(tidy = FALSE,
                       cache = FALSE,
-                      dev = "png",
-                      message = FALSE, error = FALSE, warning = TRUE)
+                      dev = "png")
 ```	
 
 
@@ -157,27 +156,71 @@ the coding sequence or genomic sequence), the size of the sequence surrounding
 which should be reported, the transcript table and optionally a gene-to-transcript
 conversion table.
 
+First the needed variables are defined, namely the transcript table `transcriptTable`,
+which provides the information needed to translate SNV coordinates which refer to
+the coding sequence to genomic coordinates. `transcriptID` provides the respective 
+transcript, the SNV is refering to. The variable `variation` holds the actual single
+nucleotide variation, whose sequence surrounding we will try to retrieve.
+
 ```{r, eval=TRUE}
 library(VarCon)
-
 ## Defining exemplary input data
 transcriptTable <- transCoord
 transcriptID <- "pseudo_ENST00000650636"
 variation <- "c.412T>G/p.(T89M)"
-gene2transcript <- data.frame(gene_name = "Example_gene",
-gene_ID = "pseudo_ENSG00000147099", transcriptID = "pseudo_ENST00000650636")
-
-results <- getSeqInfoFromVariation(referenceDnaStringSet, transcriptID,
-variation, ntWindow=20, transcriptTable, gene2transcript=gene2transcript)
-
-## Or Using a predefined gene to transcript conversion table
-transcriptID <- "Example_gene"
-results <- getSeqInfoFromVariation(referenceDnaStringSet, transcriptID,
-variation, ntWindow=20, transcriptTable, gene2transcript=gene2transcript)
-
 ```
 
-The resulting information can be visualized using the function
+With the variables set, the function `getSeqInfoFromVariation` can now be
+used to retrieve information about the SNV, like position and surrounding
+reference sequence. As an input the function requires a DNAStringSet of 
+the reference genome, a fitting transcript table referring to the same 
+reference genome assembly, the actual single nucleotide variation of 
+interest refering either to the genomic (g.) or coding (c.) position, 
+the respective transcript ID, and the size of the sequence window around
+the SNV.
+
+```{r, eval=TRUE}
+library(VarCon)
+results <- getSeqInfoFromVariation(referenceDnaStringSet, transcriptID,
+variation, ntWindow=20, transcriptTable)
+results
+```
+
+The resulting list `results` holds 8 named elements, like the transcript ID, 
+the variation, the genomic coordinate and surrounding sequences with and
+without the SNV. The elements `$ref_nuc` and `$alt_nuc` state the nucleotide 
+at the SNV position on the strand the respective transcript is encoded.
+
+In case the user would like to enter gene names instread of transcript IDs,
+during repeated entries of the same transcript ID for every gene, a 
+gene2transcript conversion table can be provided the the `getSeqInfoFromVariation`
+function. Here we first define the gene name, which we want to use instead
+of the previously entered pseudo-transcript ID. Now we define the gene2transcript
+table by generating a data frame with the gene name, the gene ID and the transcript
+ID.
+
+```{r, eval=TRUE}
+## Define gene 2 transcript table
+geneName <- "Example_gene"
+gene2transcript <- data.frame(gene_name = "Example_gene",
+gene_ID = "pseudo_ENSG00000147099", transcriptID = "pseudo_ENST00000650636")
+```
+
+Only changing the entered transcript name to a gene name and defining a 
+gene2transcript conversion table, enables to use the `getSeqInfoFromVariation`
+with gene names, in case the same transcript ID is used as a reference for 
+a specific gene.
+
+```{r, eval=TRUE}
+## Use function with gene name
+results <- getSeqInfoFromVariation(referenceDnaStringSet, geneName,
+variation, ntWindow=20, transcriptTable, gene2transcript=gene2transcript)
+results
+```
+
+The resulting list holds the same information as in the example above.
+
+The `results` object can now be visualized using the function
 `generateHEXplorerPlot` which will generate a HEXplorer plot 
 stating the HEXplorer profile of the nucleotide surrounding 
 and the strength of surrouning splice sites.

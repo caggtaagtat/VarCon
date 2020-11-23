@@ -3,19 +3,22 @@ getSeqInfoFromVariation <- function(referenceDnaStringSet,
                                         transcriptID, variation,
                                         ntWindow=20, transcriptTable,
                                         gene2transcript=gene2transcript){
+  
+  if(!transcriptID %in% transcriptTable$Transcript.stable.ID){
 
-  ## Use gene-to-transcript conversion table if needed
-  if(transcriptID %in% gene2transcript$gene_name){
-    transcriptID <- gene2transcript$transcriptID[match(transcriptID, 
-                                                         gene2transcript$gene_name)]
+      ## Use gene-to-transcript conversion table if needed
+      if(transcriptID %in% gene2transcript$gene_name){
+        idx <- match(transcriptID, gene2transcript$gene_name)
+         transcriptID <- gene2transcript$transcriptID[idx]
+      }
+  
+  
+      if(transcriptID %in% gene2transcript$geneID){
+        idx <- match(transcriptID, gene2transcript$geneID)
+        transcriptID <- gene2transcript$transcriptID[idx]
+       }
   }
-  
-  
-  if(transcriptID %in% gene2transcript$geneID){
-    transcriptID <- gene2transcript$transcriptID[match(transcriptID,
-                                                         gene2transcript$gene_ID)]
-  }
-  
+
   ## Get Info from variation annotation
   res <- list()
   trans <- as.character(transcriptID)
@@ -51,10 +54,11 @@ getSeqInfoFromVariation <- function(referenceDnaStringSet,
 
 
     }
-
-    transcriptSubset <- transcriptTable[transcriptTable$Transcript.stable.ID == trans, ]
+    
+    logicVector <- transcriptTable$Transcript.stable.ID == trans
+    transcriptSubset <- transcriptTable[logicVector, ]
     transcriptSubset$found <- 0
-    transcriptSubset <- na.omit(transcriptSubset)
+    transcriptSubset[is.na(transcriptSubset)] <- 0
 
     for(inns in seq_len(nrow(transcriptSubset))){
 
@@ -63,28 +67,28 @@ getSeqInfoFromVariation <- function(referenceDnaStringSet,
 
     }
 
-    strand <- unique(transcriptTable$Strand[transcriptTable$Transcript.stable.ID == trans])
+    strand <- transcriptSubset$Strand[1]
 
     if(strand == 1){
-
+      logicVector <- transcriptSubset$found == 1
       genomicCoord <- as.numeric(fromCoding)-
-        transcriptSubset$CDS.start[transcriptSubset$found == 1]
-      genomicCoord <- transcriptSubset$Exon.region.start..bp.[transcriptSubset$found == 1]+
+        transcriptSubset$CDS.start[logicVector]
+      genomicCoord <- transcriptSubset$Exon.region.start..bp.[logicVector]+
         genomicCoord
       genomicCoord <- genomicCoord - as.numeric(fromCodingMinus)
       genomicCoord <- genomicCoord + as.numeric(fromCodingPlus)
 
-      if(transcriptSubset$CDS.start[transcriptSubset$found == 1] == 1){
+       if(transcriptSubset$CDS.start[logicVector] == 1){
 
-        coLeng <- transcriptSubset$cDNA.coding.end[transcriptSubset$found == 1]-
-          transcriptSubset$cDNA.coding.start[transcriptSubset$found == 1]
-        exCodingStart <- transcriptSubset$Exon.region.end..bp.[transcriptSubset$found == 1]-
-          transcriptSubset$Exon.region.start..bp.[transcriptSubset$found == 1]
+        coLeng <- transcriptSubset$cDNA.coding.end[logicVector]-
+          transcriptSubset$cDNA.coding.start[logicVector]
+        exCodingStart <- transcriptSubset$Exon.region.end..bp.[logicVector]-
+          transcriptSubset$Exon.region.start..bp.[logicVector]
         exCodingStart <- exCodingStart - coLeng
 
         genomicCoord <- as.numeric(fromCoding)-
-          transcriptSubset$CDS.start[transcriptSubset$found == 1]
-        genomicCoord <- transcriptSubset$Exon.region.start..bp.[transcriptSubset$found == 1]+
+          transcriptSubset$CDS.start[logicVector]
+        genomicCoord <- transcriptSubset$Exon.region.start..bp.[logicVector]+
           exCodingStart+genomicCoord
         genomicCoord <- genomicCoord - as.numeric(fromCodingMinus)
         genomicCoord <- genomicCoord + as.numeric(fromCodingPlus)
@@ -92,25 +96,25 @@ getSeqInfoFromVariation <- function(referenceDnaStringSet,
       }
 
     }else{
-
+      logicVector <- transcriptSubset$found == 1
       genomicCoord <- as.numeric(fromCoding)-
-        transcriptSubset$CDS.start[transcriptSubset$found == 1]
-      genomicCoord <- transcriptSubset$Exon.region.end..bp.[transcriptSubset$found == 1]-
+        transcriptSubset$CDS.start[logicVector]
+      genomicCoord <- transcriptSubset$Exon.region.end..bp.[logicVector]-
         genomicCoord
       genomicCoord <- genomicCoord + as.numeric(fromCodingMinus)
       genomicCoord <- genomicCoord - as.numeric(fromCodingPlus)
 
-      if(transcriptSubset$CDS.start[transcriptSubset$found == 1] == 1){
+      if(transcriptSubset$CDS.start[logicVector] == 1){
 
-        coLeng <- transcriptSubset$cDNA.coding.end[transcriptSubset$found == 1]-
-          transcriptSubset$cDNA.coding.start[transcriptSubset$found == 1]
-        exCodingStart <- transcriptSubset$Exon.region.end..bp.[transcriptSubset$found == 1]-
-          transcriptSubset$Exon.region.start..bp.[transcriptSubset$found == 1]
+        coLeng <- transcriptSubset$cDNA.coding.end[logicVector]-
+          transcriptSubset$cDNA.coding.start[logicVector]
+        exCodingStart <- transcriptSubset$Exon.region.end..bp.[logicVector]-
+          transcriptSubset$Exon.region.start..bp.[logicVector]
         exCodingStart <- exCodingStart - coLeng
 
         genomicCoord <- as.numeric(fromCoding)-
-          transcriptSubset$CDS.start[transcriptSubset$found == 1]
-        genomicCoord <- transcriptSubset$Exon.region.end..bp.[transcriptSubset$found == 1]-
+          transcriptSubset$CDS.start[logicVector]
+        genomicCoord <- transcriptSubset$Exon.region.end..bp.[logicVector]-
           exCodingStart-genomicCoord
         genomicCoord <- genomicCoord + as.numeric(fromCodingMinus)
         genomicCoord <- genomicCoord - as.numeric(fromCodingPlus)
@@ -146,7 +150,8 @@ getSeqInfoFromVariation <- function(referenceDnaStringSet,
   res["genomicCoordinate"] <- genomicCoord
   
   ## Retrieve strand and chromosome of the transcript 
-  transcriptSubset <- transcriptTable[transcriptTable$Transcript.stable.ID == trans, ]
+  logicVector <- transcriptTable$Transcript.stable.ID == trans
+  transcriptSubset <- transcriptTable[logicVector, ]
   strand <-     unique(transcriptSubset$Strand)
   chromosome <- unique(transcriptSubset$Chromosome.scaffold.name )
 
