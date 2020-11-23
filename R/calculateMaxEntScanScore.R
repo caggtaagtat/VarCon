@@ -33,7 +33,7 @@ calculateMaxEntScanScore <- function(seqVector, ssType=3) {
   inputSequences <- tempfile("inputSequences")
   
   ## Create new text file with the sequences saved
-  write.table(seqVector, sep=",",  col.names=FALSE, file=inputSequences, row.names = F)
+  write.table(seqVector, sep=",",  col.names=FALSE, file=inputSequences, row.names = FALSE)
   
   ## Execute the respective Perl script with the respective Sequence file
   if (ssType == 3)
